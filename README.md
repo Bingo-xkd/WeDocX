@@ -1,6 +1,8 @@
-# 微信文件助手 (WeDocX)
+# WeDocX
 
-微信文件助手 **WeDocX** 一款以内嵌式微信聊天机器人为载体的效率工具。它旨在解决用户在微信生态内快速收集、整理、消化和检索各类网页/文档信息的痛点。
+[English](./README.en.md) | [中文](./README.md) | 
+
+**WeDocX** 是一款以内嵌式微信聊天机器人为载体的效率工具。它旨在解决用户在微信生态内快速收集、整理、消化和检索各类网页/文档信息的痛点。
 
 我们致力于为知识工作者和重度内容消费者，解决在微信生态中信息过载与知识沉淀困难的核心痛点。产品设计的核心原则是：
 - **无缝体验**: 深度集成于微信，以最少的步骤完成核心操作。
@@ -24,7 +26,7 @@
 - ⬜ **Phase 4: AI能力增强 (v0.3 - v0.6)**
 - ⬜ **Phase 5: 公开测试版 (v1.0)**
 
-    *更详细的产品设计规划、核心场景分析和功能路线图，请参阅我们的 **[产品需求文档 (PRD)](./produce_degsin/WeFileAssistant_degsin.md)**。*
+    *更详细的产品设计规划、核心场景分析和功能路线图，请参阅我们的 **[产品需求文档 (PRD)](./produce_degsin/WeDocX_degsin.md)**。*
 
 ## 🛠️ 技术栈 (Tech Stack)
 
@@ -59,7 +61,7 @@
 │  └─ 📄 requirements.txt
 ├─ 📁 produce_degsin/
 │  ├─ 📄 DEVELOPMENT_WORKFLOW.md
-│  └─ 📄 WeFileAssistant_degsin.md
+│  └─ 📄 WeDocX_degsin.md
 └─ 📄 README.md
 ```
 
@@ -74,6 +76,7 @@
     git clone git@github.com:Bingo-xkd/WeFileAssistant.git
     cd WeFileAssistant
     ```
+    *注意：GitHub上的仓库名称可能与项目名 `WeDocX` 不一致。*
 
 2.  **进入后端目录**
     ```bash
