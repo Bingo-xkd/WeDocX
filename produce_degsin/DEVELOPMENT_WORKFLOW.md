@@ -70,6 +70,43 @@
     6.  邮件发送Worker获取任务，从云存储下载PDF，作为附件发送。
     7.  通过微信消息通知用户"任务已完成"。
 
+
+*   **初步代码架构**:
+    ```mermaid
+    WeFileAssistant/
+        ├── backend/
+        │   ├── app/
+        │   │   ├── api/
+        │   │   │   └── __init__.py
+        │   │   ├── core/
+        │   │   │   └── __init__.py
+        │   │   ├── services/
+        │   │   │   └── __init__.py
+        │   │   ├── workers/
+        │   │   │   └── __init__.py
+        │   │   └── __init__.py
+        │   ├── tests/
+        │   │   └── __init__.py
+        │   ├── .gitignore
+        │   ├── main.py
+        │   └── requirements.txt
+        └── produce_degsin/
+            ├── DEVELOPMENT_WORKFLOW.md
+            └── WeFileAssistant_degsin.md
+    ```
+*   **目录结构说明**
+- backend/: 存放所有后端代码的根目录。
+    - app/: 项目的核心应用代码目录。
+        - __ init__.py: 这些空文件将目录标记为Python可导入的“包”，是Python项目的标准做法。
+        - api/: 存放API接口定义（在我们的技术栈中是FastAPI的Routers）。这能让接口层与业务逻辑分离，使代码更清晰。
+        - core/: 存放项目的核心配置，如数据库连接、认证信息、全局设置等。
+        - services/: 存放具体的业务逻辑层。例如，pdf_service.py 将封装所有与PDF转换相关的函数或类。
+        - workers/: 存放所有异步后台任务（Celery Tasks）。例如，pdf_worker.py 会定义处理PDF转换和邮件发送的耗时任务。
+    - tests/: 存放所有单元测试和集成测试代码，是保证代码质量和功能稳定性的关键。
+    - .gitignore: 一个特殊文件，用于告诉Git哪些文件或目录不需要被追踪。我们稍后会填充它。
+    - main.py: 整个后端服务的启动入口文件。
+    - requirements.txt: 用于声明项目所需的所有Python依赖包及其版本，方便环境复现。
+
 ---
 
 ## Phase 2, 3, 4 ...
