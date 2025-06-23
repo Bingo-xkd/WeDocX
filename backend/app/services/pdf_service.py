@@ -4,7 +4,9 @@ import re
 from datetime import datetime
 from typing import Optional
 
-from playwright.async_api import async_playwright
+from playwright.async_api import Response, async_playwright
+
+from .document_service import convert_html_to_docx, convert_html_to_txt
 
 OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../output"))
 os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -33,13 +35,28 @@ async def url_to_pdf(
     :param word_saver: 负责保存word的外部函数，签名(word_path, html, title)
     :param txt_saver: 负责保存txt的外部函数，签名(txt_path, text, title)
     :return: PDF文件的绝对路径
+    :raises: RuntimeError 当URL无效或页面加载失败时
     """
     now_str = datetime.now().strftime("%Y%m%d-%H-%M")
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch()
             page = await browser.new_page()
-            await page.goto(url, timeout=10000, wait_until="domcontentloaded")
+
+            # 访问页面并等待加载
+            try:
+                response = await page.goto(
+                    url, timeout=10000, wait_until="domcontentloaded"
+                )
+                if not response:
+                    raise RuntimeError(f"页面加载失败: 无响应")
+                if not response.ok:
+                    raise RuntimeError(f"页面加载失败: HTTP {response.status}")
+                if response.status >= 400:
+                    raise RuntimeError(f"页面加载失败: HTTP {response.status}")
+            except Exception as e:
+                raise RuntimeError(f"页面访问失败: {str(e)}")
+
             # 获取页面标题
             title = await page.title()
             if title:
@@ -50,6 +67,7 @@ async def url_to_pdf(
             if filename:
                 pdf_filename = filename
             pdf_path = os.path.join(OUTPUT_DIR, pdf_filename)
+
             # 分段滚动页面，确保所有图片都进入可视区域
             await page.evaluate(
                 """
@@ -67,6 +85,7 @@ async def url_to_pdf(
                 }
             """
             )
+
             # 等待所有图片加载完成
             await page.evaluate(
                 """
@@ -80,21 +99,26 @@ async def url_to_pdf(
                 }
             """
             )
+
             # 生成PDF
             await page.pdf(path=pdf_path, format="A4")
+
             # 额外保存word和txt
             if save_word and word_saver:
                 html = await page.content()
                 word_path = pdf_path.replace(".pdf", ".docx")
                 word_saver(word_path, html, title or "")
+
             if save_txt and txt_saver:
                 text = await page.inner_text("body")
                 txt_path = pdf_path.replace(".pdf", ".txt")
                 txt_saver(txt_path, text, title or "")
+
             await browser.close()
-        return pdf_path
+            return pdf_path
+
     except Exception as e:
-        raise RuntimeError(f"PDF转换失败: {e}")
+        raise RuntimeError(f"PDF转换失败: {str(e)}")
 
 
 # 用于同步调用的包装
@@ -109,3 +133,49 @@ def url_to_pdf_sync(
     return asyncio.run(
         url_to_pdf(url, filename, save_word, save_txt, word_saver, txt_saver)
     )
+
+
+def url_to_word_sync(url: str, filename: str = None) -> str:
+    """
+    将网页URL保存为Word（.docx）文件
+    :param url: 网页链接
+    :param filename: 可选，指定Word文件名
+    :return: Word文件的绝对路径
+    """
+
+    def word_saver(word_path, html, title):
+        convert_html_to_docx(html, word_path, title)
+
+    pdf_path = url_to_pdf_sync(
+        url,
+        filename=filename.replace(".docx", ".pdf") if filename else None,
+        save_word=True,
+        word_saver=word_saver,
+    )
+    word_path = pdf_path.replace(".pdf", ".docx")
+    if not os.path.exists(word_path):
+        raise RuntimeError("Word文件生成失败")
+    return word_path
+
+
+def url_to_txt_sync(url: str, filename: str = None) -> str:
+    """
+    将网页URL保存为TXT文件
+    :param url: 网页链接
+    :param filename: 可选，指定TXT文件名
+    :return: TXT文件的绝对路径
+    """
+
+    def txt_saver(txt_path, text, title):
+        convert_html_to_txt(text, txt_path, title)
+
+    pdf_path = url_to_pdf_sync(
+        url,
+        filename=filename.replace(".txt", ".pdf") if filename else None,
+        save_txt=True,
+        txt_saver=txt_saver,
+    )
+    txt_path = pdf_path.replace(".pdf", ".txt")
+    if not os.path.exists(txt_path):
+        raise RuntimeError("TXT文件生成失败")
+    return txt_path

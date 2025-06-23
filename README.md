@@ -101,3 +101,75 @@
     ```bash
     uvicorn app.main:app --reload
     ``` 
+
+## 端到端自动化测试流程（E2E）
+
+本项目支持完整的端到端自动化测试，覆盖"API请求 → PDF生成 → 邮件发送"全链路。
+
+### 一键测试脚本（推荐Linux/macOS）
+
+1. **前提条件**：
+   - 已安装并配置好 Redis 服务（需手动启动，Windows 用户请参考 Redis 官方文档）
+   - 已安装 conda 环境，且已创建 WeDocX 环境并安装依赖
+   - `test_config.json` 中配置了可用的测试邮箱和URL
+
+2. **运行一键测试脚本**：
+
+```bash
+bash backend/run_e2e_test.sh
+```
+
+脚本会自动完成以下步骤：
+- 激活 conda WeDocX 环境
+- 启动 Celery worker（后台）
+- 启动 FastAPI (Uvicorn) 服务（后台）
+- 执行端到端自动化测试（pytest）
+- 清理后台进程
+
+> **注意：** Windows 用户请手动依次执行下述手动步骤。
+
+---
+
+### 手动端到端测试流程（适用于Windows或调试）
+
+1. **启动 Redis 服务**
+   - 请确保本地已安装并启动 Redis，端口与 `config.py` 保持一致
+
+2. **激活 conda 环境**
+   ```bash
+   conda activate WeDocX
+   ```
+
+3. **启动 Celery worker**
+   ```bash
+   cd backend
+   celery -A app.celery_app.celery_app worker --loglevel=info
+   ```
+
+4. **启动 FastAPI (Uvicorn) 服务**
+   ```bash
+   cd backend
+   uvicorn main:app --reload
+   ```
+
+5. **执行端到端自动化测试**
+   ```bash
+   pytest backend/tests/test_e2e_process_url.py
+   ```
+
+6. **检查结果**
+   - 终端输出应显示 API 返回的任务ID和PDF文件名
+   - `backend/output/` 目录下应生成 PDF 文件
+   - 测试邮箱应收到主题为"网页转PDF"的邮件，附件为 PDF 文件
+
+---
+
+### 注意事项
+- 所有测试输入（如测试URL、收件邮箱）均通过 `backend/tests/test_config.json` 配置，便于统一管理和复用。
+- 端到端测试需依赖真实的 Redis、Celery worker、SMTP 邮箱服务。
+- 邮件送达需人工辅助验证（如需自动化校验可扩展IMAP收件脚本）。
+- 若遇到端口占用、依赖未安装等问题，请根据终端提示排查。
+
+---
+
+如需进一步定制测试流程或遇到问题，请查阅项目文档或联系开发者。 
