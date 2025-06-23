@@ -1,7 +1,9 @@
 import os
 from typing import Optional
-from docx import Document
+
 from bs4 import BeautifulSoup
+from docx import Document
+
 
 def save_as_txt(txt_path: str, text: str, title: Optional[str] = None):
     """
@@ -10,10 +12,11 @@ def save_as_txt(txt_path: str, text: str, title: Optional[str] = None):
     :param text: 纯文本内容
     :param title: 可选，文档标题
     """
-    with open(txt_path, 'w', encoding='utf-8') as f:
+    with open(txt_path, "w", encoding="utf-8") as f:
         if title:
-            f.write(title + '\n\n')
+            f.write(title + "\n\n")
         f.write(text)
+
 
 def save_as_docx(docx_path: str, html: str, title: Optional[str] = None):
     """
@@ -22,7 +25,7 @@ def save_as_docx(docx_path: str, html: str, title: Optional[str] = None):
     :param html: 网页HTML内容
     :param title: 可选，文档标题
     """
-    soup = BeautifulSoup(html, 'html.parser')
+    soup = BeautifulSoup(html, "html.parser")
     doc = Document()
     if title:
         doc.add_heading(title, level=1)
@@ -30,10 +33,10 @@ def save_as_docx(docx_path: str, html: str, title: Optional[str] = None):
     body = soup.body
     if body:
         for elem in body.descendants:
-            if elem.name == 'p' and elem.get_text(strip=True):
+            if elem.name == "p" and elem.get_text(strip=True):
                 doc.add_paragraph(elem.get_text(strip=True))
-            elif elem.name in ['h1', 'h2', 'h3']:
+            elif elem.name in ["h1", "h2", "h3"]:
                 doc.add_heading(elem.get_text(strip=True), level=2)
     else:
         doc.add_paragraph(soup.get_text())
-    doc.save(docx_path) 
+    doc.save(docx_path)

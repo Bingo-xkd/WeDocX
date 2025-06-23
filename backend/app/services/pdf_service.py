@@ -1,16 +1,19 @@
 import asyncio
-from playwright.async_api import async_playwright
 import os
-from datetime import datetime
 import re
+from datetime import datetime
 from typing import Optional
 
-OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../output'))
+from playwright.async_api import async_playwright
+
+OUTPUT_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../output"))
 os.makedirs(OUTPUT_DIR, exist_ok=True)
+
 
 def sanitize_filename(name: str) -> str:
     # 移除非法字符，保留中英文、数字、下划线、短横线
-    return re.sub(r'[^\w\u4e00-\u9fa5-]', '', name)
+    return re.sub(r"[^\w\u4e00-\u9fa5-]", "", name)
+
 
 async def url_to_pdf(
     url: str,
@@ -18,7 +21,7 @@ async def url_to_pdf(
     save_word: bool = False,
     save_txt: bool = False,
     word_saver: Optional[callable] = None,
-    txt_saver: Optional[callable] = None
+    txt_saver: Optional[callable] = None,
 ) -> str:
     """
     使用Playwright将指定URL页面渲染为PDF，保存到本地output目录。
@@ -31,7 +34,7 @@ async def url_to_pdf(
     :param txt_saver: 负责保存txt的外部函数，签名(txt_path, text, title)
     :return: PDF文件的绝对路径
     """
-    now_str = datetime.now().strftime('%Y%m%d-%H-%M')
+    now_str = datetime.now().strftime("%Y%m%d-%H-%M")
     try:
         async with async_playwright() as p:
             browser = await p.chromium.launch()
@@ -48,7 +51,8 @@ async def url_to_pdf(
                 pdf_filename = filename
             pdf_path = os.path.join(OUTPUT_DIR, pdf_filename)
             # 分段滚动页面，确保所有图片都进入可视区域
-            await page.evaluate("""
+            await page.evaluate(
+                """
                 async () => {
                     const scrollStep = window.innerHeight / 2;
                     const scrollHeight = document.body.scrollHeight;
@@ -61,9 +65,11 @@ async def url_to_pdf(
                     window.scrollTo(0, document.body.scrollHeight);
                     await new Promise(r => setTimeout(r, 1000));
                 }
-            """)
+            """
+            )
             # 等待所有图片加载完成
-            await page.evaluate("""
+            await page.evaluate(
+                """
                 () => {
                     return Promise.all(Array.from(document.images).map(img => {
                         if (img.complete) return true;
@@ -72,23 +78,34 @@ async def url_to_pdf(
                         });
                     }));
                 }
-            """)
+            """
+            )
             # 生成PDF
             await page.pdf(path=pdf_path, format="A4")
             # 额外保存word和txt
             if save_word and word_saver:
                 html = await page.content()
-                word_path = pdf_path.replace('.pdf', '.docx')
+                word_path = pdf_path.replace(".pdf", ".docx")
                 word_saver(word_path, html, title or "")
             if save_txt and txt_saver:
-                text = await page.inner_text('body')
-                txt_path = pdf_path.replace('.pdf', '.txt')
+                text = await page.inner_text("body")
+                txt_path = pdf_path.replace(".pdf", ".txt")
                 txt_saver(txt_path, text, title or "")
             await browser.close()
         return pdf_path
     except Exception as e:
         raise RuntimeError(f"PDF转换失败: {e}")
 
+
 # 用于同步调用的包装
-def url_to_pdf_sync(url: str, filename: str = None, save_word=False, save_txt=False, word_saver=None, txt_saver=None) -> str:
-    return asyncio.run(url_to_pdf(url, filename, save_word, save_txt, word_saver, txt_saver)) 
+def url_to_pdf_sync(
+    url: str,
+    filename: str = None,
+    save_word=False,
+    save_txt=False,
+    word_saver=None,
+    txt_saver=None,
+) -> str:
+    return asyncio.run(
+        url_to_pdf(url, filename, save_word, save_txt, word_saver, txt_saver)
+    )
