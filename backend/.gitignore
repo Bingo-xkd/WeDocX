@@ -130,3 +130,8 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+
+# only for test
+tests/test_email.py
+tests/test_e2e_process_url.py
+output/
