@@ -54,7 +54,6 @@ async def process_url(request: ProcessUrlRequest):
                 str(request.email),
                 "网页转PDF",
                 f"请查收由WeDocX生成的PDF文件：{pdf_filename}",
-                [pdf_path],
             ),
         )
         result = task_chain.apply_async()

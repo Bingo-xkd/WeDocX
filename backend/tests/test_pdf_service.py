@@ -41,7 +41,7 @@ def test_url_to_txt_sync_success(valid_urls, temp_output_dir, keep_files):
     clean_file(txt_path, keep_files)
 
 
-@pytest.mark.parametrize("url_key", ["malformed", "nonexistent", "wrong_protocol"])
+@pytest.mark.parametrize("url_key", ["not_found", "bad_protocol", "malformed"])
 def test_url_conversion_with_invalid_urls(invalid_urls, url_key):
     """测试无效URL的异常处理"""
     url = invalid_urls[url_key]

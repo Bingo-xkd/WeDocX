@@ -16,8 +16,8 @@ def create_pdf_task(url: str, output_path: str) -> str:
 
 
 @celery_app.task
-def send_email_task(to_email: str, subject: str, body: str, attachments: list = None):
-    """异步发送邮件"""
+def send_email_task(pdf_path: str, to_email: str, subject: str, body: str):
+    """异步发送邮件, pdf_path由上一个任务(create_pdf_task)传来"""
     config = EmailConfig(
         smtp_server=settings.SMTP_SERVER,
         smtp_port=settings.SMTP_PORT,
@@ -27,6 +27,6 @@ def send_email_task(to_email: str, subject: str, body: str, attachments: list = 
     )
     service = EmailService(config)
     service.send_email(
-        to_email=to_email, subject=subject, body=body, attachments=attachments
+        to_email=to_email, subject=subject, body=body, attachments=[pdf_path]
     )
     return True

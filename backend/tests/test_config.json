@@ -1,0 +1,49 @@
+{
+    "api": {
+        "base_url": "http://127.0.0.1:8000",
+        "process_url_endpoint": "/api/v1/process-url"
+    },
+    "urls": {
+        "valid": {
+            "simple": "https://www.wikipedia.org",
+            "complex": "https://mp.weixin.qq.com/s/z7NZ5ilDNtwqnN8R39DKqw"
+        },
+        "invalid": {
+            "not_found": "http://example.com/nonexistentpage",
+            "bad_protocol": "ftp://example.com",
+            "malformed": "htp://bad-url"
+        }
+    },
+    "file": {
+        "output_dir": "output",
+        "keep_files": false,
+        "custom_names": {
+            "pdf": "test_custom_name.pdf",
+            "docx": "test_custom_name.docx",
+            "txt": "test_custom_name.txt"
+        },
+        "test_content": {
+            "txt": "This is a test content.",
+            "html": "<h1>Test HTML</h1><p>This is a test HTML content.</p>"
+        }
+    },
+    "document": {
+        "test_content": "This is a test document content for saving."
+    },
+    "email": {
+        "smtp": {
+            "server": "smtp.qq.com",
+            "port": 465,
+            "user": "1044553197@qq.com",
+            "password": "viaieoturluwbeci",
+            "sender_email": "1044553197@qq.com"
+        },
+        "test_cases": {
+            "sender": "1044553197@qq.com",
+            "recipient": "18582088138@163.com",
+            "subject": "Test Email Subject",
+            "body": "This is the test email body.",
+            "invalid": "not.an.email"
+        }
+    }
+} 
