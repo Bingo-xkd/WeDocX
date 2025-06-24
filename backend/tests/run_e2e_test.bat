@@ -34,7 +34,7 @@ echo.
 echo [4/6] Starting FastAPI server in the background...
 start "FastAPIServer" /b uvicorn main:app --host 127.0.0.1 --port 8000 --reload > ../output/uvicorn.log 2>&1
 echo [INFO] FastAPI server started. Log: backend\uvicorn.log
-timeout /t 5 >nul
+timeout /t 10 >nul
 
 REM 5. 运行 pytest
 echo.
