@@ -134,6 +134,8 @@ cython_debug/
 # only for test
 tests/test_email.py
 tests/test_e2e_process_url.py
+backend/output
+backend/logs
 
 # logging info
 logs/

@@ -1,68 +1,65 @@
-import os
-import traceback
+"""
+WeDocX FastAPI 主应用
+"""
 
-from app.services.pdf_service import url_to_pdf_sync
-from app.workers.tasks import create_pdf_task, send_email_task
-from celery import chain
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, EmailStr, HttpUrl
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from pydantic import ValidationError
 
+from app.api.endpoints import router as api_router
+from app.core.config import settings
+from app.core.exceptions import (
+    WeDocXException,
+    general_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
+    wechat_exception_handler,
+)
+from app.core.logging import get_logger
+
+logger = get_logger(__name__)
+
+# 全局FastAPI实例，供服务启动和测试用例import
 app = FastAPI(
-    title="WeDocX API",
-    description="API for WeDocX to process URLs into PDFs.",
-    version="0.1.0",
+    title=settings.PROJECT_NAME,
+    description="WeDocX - 网页转PDF服务API",
+    version="0.2.0",
+    docs_url="/docs" if settings.DEBUG else None,
+    redoc_url="/redoc" if settings.DEBUG else None,
 )
 
+# 添加CORS中间件
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # 生产环境应限制具体域名
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class ProcessUrlRequest(BaseModel):
-    url: HttpUrl
-    email: EmailStr
+# 注册异常处理器
+app.add_exception_handler(WeDocXException, wechat_exception_handler)
+app.add_exception_handler(ValidationError, validation_exception_handler)
+app.add_exception_handler(Exception, general_exception_handler)
 
+# 注册API路由
+app.include_router(api_router, prefix=settings.API_V1_STR)
+
+@app.on_event("startup")
+async def startup_event():
+    logger.info(f"启动 {settings.PROJECT_NAME} v0.2.0")
+    logger.info(f"环境: {settings.ENVIRONMENT}")
+    logger.info(f"调试模式: {settings.DEBUG}")
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    logger.info(f"关闭 {settings.PROJECT_NAME}")
 
 @app.get("/")
-async def read_root():
-    """
-    Root endpoint to check API status.
-    """
-    return {"status": "ok", "message": "Welcome to WeDocX API!"}
+def read_root():
+    return {"status": "ok", "message": "Welcome to WeDocX API!", "version": settings.VERSION}
 
-
-@app.post("/api/v1/process-url")
-async def process_url(request: ProcessUrlRequest):
-    """
-    接收用户提交的URL和目标邮箱，调用PDF转换服务（异步任务链）。
-    """
-    try:
-        # 生成输出文件名
-        filename = None
-        pdf_output_dir = os.path.abspath(
-            os.path.join(os.path.dirname(__file__), "output")
-        )
-        os.makedirs(pdf_output_dir, exist_ok=True)
-        # 这里简单用url最后一段+时间戳
-        from datetime import datetime
-
-        now_str = datetime.now().strftime("%Y%m%d-%H-%M-%S")
-        base_name = str(request.url).split("/")[-1][:10] or "file"
-        pdf_filename = f"{now_str}-{base_name}.pdf"
-        pdf_path = os.path.join(pdf_output_dir, pdf_filename)
-
-        # 任务链：先生成PDF，再发邮件
-        task_chain = chain(
-            create_pdf_task.s(str(request.url), pdf_path),
-            send_email_task.s(
-                str(request.email),
-                "网页转PDF",
-                f"请查收由WeDocX生成的PDF文件：{pdf_filename}",
-            ),
-        )
-        result = task_chain.apply_async()
-        return {
-            "status": "success",
-            "task_id": str(result.id),
-            "pdf_file": pdf_filename,
-        }
-    except Exception as e:
-        print("API端点异常:", e)
-        print(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"任务提交失败: {e}")
+# 支持直接python main.py本地运行
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=settings.DEBUG, workers=settings.WORKERS)
