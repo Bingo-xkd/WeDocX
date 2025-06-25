@@ -1,6 +1,7 @@
 """
 Database session management
 """
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -14,6 +15,7 @@ engine = create_engine(
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+
 def get_db():
     """
     Dependency to get a database session.
@@ -22,4 +24,4 @@ def get_db():
     try:
         yield db
     finally:
-        db.close() 
+        db.close()

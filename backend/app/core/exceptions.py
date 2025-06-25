@@ -15,7 +15,7 @@ logger = get_logger(__name__)
 
 class WeDocXException(Exception):
     """WeDocX基础异常类"""
-    
+
     def __init__(
         self,
         message: str,
@@ -32,7 +32,7 @@ class WeDocXException(Exception):
 
 class ValidationException(WeDocXException):
     """参数验证异常"""
-    
+
     def __init__(self, message: str, details: Optional[Dict[str, Any]] = None):
         super().__init__(
             message=message,
@@ -44,7 +44,7 @@ class ValidationException(WeDocXException):
 
 class TaskNotFoundException(WeDocXException):
     """任务未找到异常"""
-    
+
     def __init__(self, task_id: str):
         super().__init__(
             message=f"任务 {task_id} 未找到",
@@ -56,7 +56,7 @@ class TaskNotFoundException(WeDocXException):
 
 class PDFGenerationException(WeDocXException):
     """PDF生成异常"""
-    
+
     def __init__(self, message: str, url: str):
         super().__init__(
             message=message,
@@ -68,7 +68,7 @@ class PDFGenerationException(WeDocXException):
 
 class EmailSendException(WeDocXException):
     """邮件发送异常"""
-    
+
     def __init__(self, message: str, email: str):
         super().__init__(
             message=message,
@@ -80,7 +80,7 @@ class EmailSendException(WeDocXException):
 
 class URLProcessingException(WeDocXException):
     """URL处理异常"""
-    
+
     def __init__(self, message: str, url: str):
         super().__init__(
             message=message,
@@ -102,16 +102,18 @@ def create_error_response(
         "error": {
             "code": error_code,
             "message": message,
-        }
+        },
     }
-    
+
     if details:
         response["error"]["details"] = details
-    
+
     return response
 
 
-async def wechat_exception_handler(request: Request, exc: WeDocXException) -> JSONResponse:
+async def wechat_exception_handler(
+    request: Request, exc: WeDocXException
+) -> JSONResponse:
     """WeDocX异常处理器"""
     logger.error(
         f"WeDocX异常: {exc.error_code} - {exc.message}",
@@ -119,9 +121,9 @@ async def wechat_exception_handler(request: Request, exc: WeDocXException) -> JS
             "url": str(request.url),
             "method": request.method,
             "details": exc.details,
-        }
+        },
     )
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content=create_error_response(
@@ -133,16 +135,18 @@ async def wechat_exception_handler(request: Request, exc: WeDocXException) -> JS
     )
 
 
-async def validation_exception_handler(request: Request, exc: ValidationError) -> JSONResponse:
+async def validation_exception_handler(
+    request: Request, exc: ValidationError
+) -> JSONResponse:
     """Pydantic验证异常处理器"""
     logger.error(
         f"参数验证失败: {exc.errors()}",
         extra={
             "url": str(request.url),
             "method": request.method,
-        }
+        },
     )
-    
+
     return JSONResponse(
         status_code=422,
         content=create_error_response(
@@ -161,9 +165,9 @@ async def http_exception_handler(request: Request, exc: HTTPException) -> JSONRe
         extra={
             "url": str(request.url),
             "method": request.method,
-        }
+        },
     )
-    
+
     return JSONResponse(
         status_code=exc.status_code,
         content=create_error_response(
@@ -181,9 +185,9 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
         extra={
             "url": str(request.url),
             "method": request.method,
-        }
+        },
     )
-    
+
     return JSONResponse(
         status_code=500,
         content=create_error_response(
@@ -191,4 +195,4 @@ async def general_exception_handler(request: Request, exc: Exception) -> JSONRes
             error_code="INTERNAL_ERROR",
             message="服务器内部错误",
         ),
-    ) 
+    )

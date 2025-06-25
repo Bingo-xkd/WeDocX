@@ -1,8 +1,10 @@
 """
 API Client for WeDocX Backend
 """
+
+from typing import Any, Dict, Optional
+
 import httpx
-from typing import Optional, Dict, Any
 
 from .logging_config import get_bot_logger
 
@@ -20,7 +22,7 @@ async def start_task(url: str, email: Optional[str] = None) -> Dict[str, Any]:
         payload = {"url": url}
         if email:
             payload["email"] = email
-        
+
         logger.info(f"Calling start_task API with URL: {url}")
         response = await client.post(f"{BACKEND_URL}/process-url", json=payload)
         response.raise_for_status()
@@ -46,7 +48,9 @@ async def retry_task(task_id: str) -> Dict[str, Any]:
     """
     async with httpx.AsyncClient() as client:
         logger.info(f"Calling retry_task API for Task ID: {task_id}")
-        response = await client.post(f"{BACKEND_URL}/retry-task", json={"task_id": task_id})
+        response = await client.post(
+            f"{BACKEND_URL}/retry-task", json={"task_id": task_id}
+        )
         response.raise_for_status()
         logger.info(f"retry_task API call successful for Task ID: {task_id}")
-        return response.json() 
+        return response.json()

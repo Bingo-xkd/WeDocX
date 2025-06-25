@@ -1,12 +1,15 @@
 """
 Task Data Model
 """
+
 import enum
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, DateTime, Enum, Text
+
+from sqlalchemy import Column, DateTime, Enum, Integer, String, Text
 from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
+
 
 class TaskStatus(enum.Enum):
     PENDING = "PENDING"
@@ -14,6 +17,7 @@ class TaskStatus(enum.Enum):
     SUCCESS = "SUCCESS"
     FAILURE = "FAILURE"
     RETRY = "RETRY"
+
 
 class Task(Base):
     __tablename__ = "tasks"
@@ -27,4 +31,4 @@ class Task(Base):
     error_message = Column(Text, nullable=True)
 
     def __repr__(self):
-        return f"<Task(id='{self.id}', status='{self.status}')>" 
+        return f"<Task(id='{self.id}', status='{self.status}')>"

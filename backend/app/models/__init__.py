@@ -1,1 +1,1 @@
-from .task import Task, TaskStatus, Base 
+from .task import Base, Task, TaskStatus

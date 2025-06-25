@@ -4,16 +4,16 @@ API端点单元测试
 
 import json
 import os
-from unittest.mock import patch, MagicMock
 import sys
+from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi.testclient import TestClient
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from main import app
 from app.core.config import settings
+from main import app
 
 # 加载测试配置
 test_config_path = os.path.join(os.path.dirname(__file__), "test_config.json")
@@ -24,7 +24,9 @@ client = TestClient(app)
 
 
 @pytest.mark.parametrize("url_key", ["simple", "complex"])
-def test_process_url_endpoint_success(client, monkeypatch, valid_urls, email_test_cases, url_key):
+def test_process_url_endpoint_success(
+    client, monkeypatch, valid_urls, email_test_cases, url_key
+):
     """测试 /api/v1/process-url 端点 - 成功场景"""
     # mock chain
     mock_task_result = MagicMock()
@@ -45,7 +47,10 @@ def test_process_url_endpoint_success(client, monkeypatch, valid_urls, email_tes
 def test_process_url_endpoint_invalid_payload(client, email_test_cases):
     """测试 /api/v1/process-url 端点 - 无效的请求体"""
     # 无效URL
-    data_invalid_url = {"url": "not-a-valid-url", "email": email_test_cases["recipient"]}
+    data_invalid_url = {
+        "url": "not-a-valid-url",
+        "email": email_test_cases["recipient"],
+    }
     response = client.post("/api/v1/process-url", json=data_invalid_url)
     assert response.status_code == 422
     # 无效Email
@@ -122,13 +127,13 @@ def test_health_check_endpoint(client):
 
 class TestRootEndpoint:
     """根端点测试"""
-    
+
     def test_root_endpoint(self):
         """测试根端点"""
         response = client.get("/")
         assert response.status_code == 200
-        
+
         data = response.json()
         assert data["status"] == "ok"
         assert "Welcome to WeDocX API" in data["message"]
-        assert data["version"] == "0.2.0" 
+        assert data["version"] == "0.2.0"

@@ -5,16 +5,19 @@ Celery 任务定义
 import os
 from typing import Optional
 
-from celery import current_task
-from celery.utils.log import get_task_logger
-
 from app.celery_app import celery_app
 from app.core.config import settings
-from app.core.exceptions import PDFGenerationException, EmailSendException
+from app.core.exceptions import EmailSendException, PDFGenerationException
 from app.core.logging import get_logger
-from app.services.email_service import EmailConfig, EmailService, send_email_with_attachment
-from app.services.pdf_service import url_to_pdf_sync
 from app.services.document_service import process_url_to_pdf
+from app.services.email_service import (
+    EmailConfig,
+    EmailService,
+    send_email_with_attachment,
+)
+from app.services.pdf_service import url_to_pdf_sync
+from celery import current_task
+from celery.utils.log import get_task_logger
 
 logger = get_logger()
 celery_logger = get_task_logger(__name__)
@@ -84,26 +87,26 @@ def send_email_task(self, recipient_email: str, file_path: str):
 def cleanup_task(self, pdf_path: str) -> dict:
     """
     清理任务 - 删除临时文件
-    
+
     Args:
         pdf_path: PDF文件路径
-        
+
     Returns:
         dict: 清理结果
     """
     task_id = self.request.id
     logger.info(f"开始清理任务 {task_id}: {pdf_path}")
-    
+
     try:
         if os.path.exists(pdf_path):
             os.remove(pdf_path)
             logger.info(f"文件已删除: {pdf_path}")
-        
+
         return {
             "cleaned": True,
             "file_path": pdf_path,
         }
-        
+
     except Exception as exc:
         logger.error(f"清理任务失败 {task_id}: {str(exc)}")
         return {

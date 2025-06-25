@@ -53,7 +53,9 @@ class Settings(BaseSettings):
     # 日志配置
     LOG_LEVEL: str = "INFO"
     LOG_FILE: str = "logs/wedocx.log"
-    LOG_FORMAT: str = "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}"
+    LOG_FORMAT: str = (
+        "{time:YYYY-MM-DD HH:mm:ss} | {level} | {name}:{function}:{line} | {message}"
+    )
     LOG_ROTATION: str = "1 day"
     LOG_RETENTION: str = "30 days"
 

@@ -5,6 +5,7 @@ API端点模块
 from datetime import datetime
 from typing import Optional
 
+from celery import chain
 from celery.result import AsyncResult
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import ValidationError
@@ -16,7 +17,6 @@ from ..core.exceptions import (
 )
 from ..core.logging import get_logger
 from ..workers.tasks import create_pdf_task, send_email_task
-from celery import chain
 from .models import (
     HealthCheckResponse,
     ProcessUrlRequest,
@@ -46,34 +46,36 @@ async def health_check():
 async def process_url(request: ProcessUrlRequest):
     """
     处理URL请求，生成PDF并发送邮件
-    
+
     Args:
         request: 包含URL和邮箱的请求
-        
+
     Returns:
         ProcessUrlResponse: 包含任务ID的响应
     """
     try:
         logger.info(f"收到URL处理请求: {request.url}")
-        
+
         # 验证URL
         url_str = str(request.url)
-        if not url_str.startswith(('http://', 'https://')):
+        if not url_str.startswith(("http://", "https://")):
             raise URLProcessingException("无效的URL格式", url_str)
-        
+
         # 生成输出文件名
-        from datetime import datetime
         import os
-        
+        from datetime import datetime
+
         now_str = datetime.now().strftime("%Y%m%d-%H-%M-%S")
         base_name = url_str.split("/")[-1][:10] or "file"
         pdf_filename = f"{now_str}-{base_name}.pdf"
-        
+
         # 确保输出目录存在
-        output_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "output"))
+        output_dir = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "output")
+        )
         os.makedirs(output_dir, exist_ok=True)
         pdf_path = os.path.join(output_dir, pdf_filename)
-        
+
         # 创建任务链：先生成PDF，再发邮件
         task_chain = chain(
             create_pdf_task.s(url_str, pdf_path),
@@ -83,19 +85,19 @@ async def process_url(request: ProcessUrlRequest):
                 f"请查收由WeDocX生成的PDF文件：{pdf_filename}",
             ),
         )
-        
+
         # 提交任务
         result = task_chain.apply_async()
-        
+
         logger.info(f"任务已提交: {result.id}")
-        
+
         return ProcessUrlResponse(
             success=True,
             task_id=str(result.id),
             message="任务已提交，正在处理中",
             pdf_file=pdf_filename,
         )
-        
+
     except ValidationException as e:
         logger.error(f"参数验证失败: {e.message}")
         raise
@@ -111,22 +113,22 @@ async def process_url(request: ProcessUrlRequest):
 async def get_task_status(task_id: str):
     """
     获取任务状态
-    
+
     Args:
         task_id: 任务ID
-        
+
     Returns:
         TaskStatusResponse: 任务状态信息
     """
     try:
         logger.info(f"查询任务状态: {task_id}")
-        
+
         # 获取Celery任务结果
         task_result = AsyncResult(task_id)
-        
+
         if not task_result:
             raise TaskNotFoundException(task_id)
-        
+
         # 构建响应数据
         response_data = {
             "task_id": task_id,
@@ -137,7 +139,7 @@ async def get_task_status(task_id: str):
             "result": None,
             "error": None,
         }
-        
+
         # 根据任务状态设置详细信息
         if task_result.status == "SUCCESS":
             response_data["result"] = task_result.result
@@ -151,9 +153,9 @@ async def get_task_status(task_id: str):
             response_data["progress"] = 25.0
         elif task_result.status == "RETRY":
             response_data["progress"] = 50.0
-        
+
         return TaskStatusResponse(**response_data)
-        
+
     except TaskNotFoundException as e:
         logger.error(f"任务未找到: {task_id}")
         raise
@@ -166,38 +168,38 @@ async def get_task_status(task_id: str):
 async def retry_task(request: RetryTaskRequest):
     """
     重试失败的任务
-    
+
     Args:
         request: 包含任务ID的请求
-        
+
     Returns:
         RetryTaskResponse: 重试结果
     """
     try:
         logger.info(f"重试任务: {request.task_id}")
-        
+
         # 获取原任务结果
         task_result = AsyncResult(request.task_id)
-        
+
         if not task_result:
             raise TaskNotFoundException(request.task_id)
-        
+
         # 检查任务是否可以重试
         if task_result.status != "FAILURE":
             raise ValidationException(f"任务状态为 {task_result.status}，无法重试")
-        
+
         # 重新提交任务
         # 这里需要根据原任务的参数重新创建任务链
         # 暂时返回成功，实际实现需要从数据库获取原任务参数
-        
+
         logger.info(f"任务重试已提交: {request.task_id}")
-        
+
         return RetryTaskResponse(
             success=True,
             task_id=request.task_id,
             message="任务重试已提交",
         )
-        
+
     except (TaskNotFoundException, ValidationException) as e:
         logger.error(f"重试任务失败: {e.message}")
         raise
@@ -216,4 +218,4 @@ async def read_root():
         "message": "Welcome to WeDocX API!",
         "version": "0.2.0",
         "timestamp": datetime.now(),
-    } 
+    }

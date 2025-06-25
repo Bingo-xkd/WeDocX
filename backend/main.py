@@ -2,22 +2,21 @@
 WeDocX FastAPI 主应用
 """
 
-from fastapi import FastAPI, Request
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import ValidationError
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException
-
 from app.api.endpoints import router as api_router
 from app.core.config import settings
 from app.core.exceptions import (
     APIException,
-    wechat_exception_handler,
-    validation_exception_handler,
-    http_exception_handler,
     general_exception_handler,
+    http_exception_handler,
+    validation_exception_handler,
+    wechat_exception_handler,
 )
 from app.core.logging import get_logger, setup_logging
+from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+from starlette.exceptions import HTTPException
 
 logger = get_logger(__name__)
 
@@ -51,6 +50,7 @@ app.add_exception_handler(Exception, general_exception_handler)
 # 注册API路由
 app.include_router(api_router, prefix=settings.API_V1_STR)
 
+
 @app.on_event("startup")
 async def startup_event():
     """
@@ -60,23 +60,37 @@ async def startup_event():
     logger.info(f"环境: {settings.ENVIRONMENT}")
     logger.info(f"调试模式: {settings.DEBUG}")
 
+
 @app.on_event("shutdown")
 async def shutdown_event():
     logger.info(f"关闭 {settings.PROJECT_NAME}")
 
+
 @app.get("/")
 def read_root():
-    return {"status": "ok", "message": "Welcome to WeDocX API!", "version": settings.VERSION}
+    return {
+        "status": "ok",
+        "message": "Welcome to WeDocX API!",
+        "version": settings.VERSION,
+    }
+
 
 @app.exception_handler(APIException)
 async def api_exception_handler(request: Request, exc: APIException):
     # 在这里可以添加处理API异常的逻辑
     return JSONResponse(
-        status_code=exc.status_code,
-        content={"error": exc.error, "message": exc.detail}
+        status_code=exc.status_code, content={"error": exc.error, "message": exc.detail}
     )
+
 
 # 支持直接python main.py本地运行
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host=settings.HOST, port=settings.PORT, reload=settings.DEBUG, workers=settings.WORKERS)
+
+    uvicorn.run(
+        "main:app",
+        host=settings.HOST,
+        port=settings.PORT,
+        reload=settings.DEBUG,
+        workers=settings.WORKERS,
+    )

@@ -1,17 +1,18 @@
 """
 Wechaty Bot Main Entry
 """
+
 import asyncio
 import os
 from typing import Optional
 
-from wechaty import Wechaty, WechatyOptions, Message, Room
+from command_handler import handle_command, poll_task_status
+from logging_config import get_bot_logger, setup_bot_logging
+from wechaty import Message, Room, Wechaty, WechatyOptions
 from wechaty_puppet import MessageType
 
-from command_handler import handle_command, poll_task_status
-from wechat_bot.utils import parse_url
 from wechat_bot.api_client import start_task
-from logging_config import setup_bot_logging, get_bot_logger
+from wechat_bot.utils import parse_url
 
 logger = get_bot_logger()
 
@@ -22,22 +23,24 @@ async def main():
     """
     setup_bot_logging()
     # Set Wechaty token
-    if 'WECHATY_PUPPET_SERVICE_TOKEN' not in os.environ:
-        logger.error('''
+    if "WECHATY_PUPPET_SERVICE_TOKEN" not in os.environ:
+        logger.error(
+            """
             Error: WECHATY_PUPPET_SERVICE_TOKEN is not found in the environment variables
             You need a token to run the Wechaty bot.
             You can get a free token from https://wechaty.js.org/docs/token
-        ''')
+        """
+        )
         return
 
     options = WechatyOptions()
     bot = Wechaty(options)
 
-    bot.on('message', on_message)
+    bot.on("message", on_message)
 
     await bot.start()
 
-    logger.info(f'Bot {bot.name()} started.')
+    logger.info(f"Bot {bot.name()} started.")
 
 
 async def on_message(msg: Message):
@@ -60,25 +63,29 @@ async def on_message(msg: Message):
 
     # 根据消息类型进行不同处理
     if msg_type == MessageType.MESSAGE_TYPE_TEXT:
-        log_message(room, talker, f'Received Text: {text}')
+        log_message(room, talker, f"Received Text: {text}")
     elif msg_type == MessageType.MESSAGE_TYPE_URL:
         url = parse_url(text)
         if url:
-            log_message(room, talker, f'Received URL: {url}')
+            log_message(room, talker, f"Received URL: {url}")
             try:
                 task_data = await start_task(url)
                 task_id = task_data.get("task_id")
-                await msg.say(f"Task started successfully!\nTask ID: {task_id}\nI will notify you when it's done.")
+                await msg.say(
+                    f"Task started successfully!\nTask ID: {task_id}\nI will notify you when it's done."
+                )
                 # Start a background task to poll for the result
                 asyncio.create_task(poll_task_status(msg, task_id))
             except Exception as e:
                 await msg.say(f"Error starting task for URL {url}: {e}")
         else:
-            log_message(room, talker, f'Could not parse URL from message: {text}')
+            log_message(room, talker, f"Could not parse URL from message: {text}")
     elif msg_type == MessageType.MESSAGE_TYPE_IMAGE:
-        log_message(room, talker, 'Received an Image.')
+        log_message(room, talker, "Received an Image.")
     else:
-        log_message(room, talker, f'Received an unhandled message type: {msg_type.name}')
+        log_message(
+            room, talker, f"Received an unhandled message type: {msg_type.name}"
+        )
 
 
 async def log_message(room: Optional[Room], talker, content: str):
@@ -91,4 +98,4 @@ async def log_message(room: Optional[Room], talker, content: str):
 
 
 if __name__ == "__main__":
-    asyncio.run(main()) 
+    asyncio.run(main())

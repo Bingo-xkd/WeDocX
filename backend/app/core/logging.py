@@ -47,4 +47,4 @@ def get_logger():
 
 
 # 初始化日志系统
-setup_logging() 
+setup_logging()
