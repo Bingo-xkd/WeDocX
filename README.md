@@ -21,8 +21,8 @@
 ## 🚧 开发进度 (Development Progress)
 
 - ✅ **Phase 1: 奠基与规划 (Foundation & Planning)**
-- ⏳ **Phase 2: MVP 开发 (v0.1)** *(进行中)*
-- ⬜ **Phase 3: 产品化与体验优化 (v0.2)**
+- ✅ **Phase 2: MVP 开发 (v0.1)**
+- 🟧 **Phase 3: 产品化与体验优化 (v0.2)** *(部分已完成，已实现API接口、核心业务逻辑、Celery任务链、单元测试等，部分配置与日志功能待完善)*
 - ⬜ **Phase 4: AI能力增强 (v0.3 - v0.6)**
 - ⬜ **Phase 5: 公开测试版 (v1.0)**
 
