@@ -1,0 +1,75 @@
+version: '3.9'
+services:
+  web:
+    build: .
+    container_name: wedocx-web
+    command: uvicorn backend/main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+      - ./output:/app/output
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/wedocx
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - SMTP_SERVER=smtp.qq.com
+      - SMTP_PORT=587
+      - SMTP_USER=your_email@qq.com
+      - SMTP_PASSWORD=your_password
+      - SENDER_EMAIL=your_email@qq.com
+    depends_on:
+      - db
+      - redis
+
+  celery:
+    build: .
+    container_name: wedocx-celery
+    command: celery -A app.workers.tasks worker --loglevel=info
+    volumes:
+      - .:/app
+      - ./output:/app/output
+    environment:
+      - ENVIRONMENT=production
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/wedocx
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    depends_on:
+      - db
+      - redis
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: wedocx-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  db:
+    image: postgres:15-alpine
+    container_name: wedocx-db
+    environment:
+      POSTGRES_DB: wedocx
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+
+  wechat_bot:
+    build: .
+    container_name: wedocx-wechat-bot
+    command: python wechat_bot/main.py
+    volumes:
+      - .:/app
+    environment:
+      - ENVIRONMENT=production
+    depends_on:
+      - web
+
+volumes:
+  pg-data:
+  redis-data: 

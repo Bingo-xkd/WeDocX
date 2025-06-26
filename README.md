@@ -172,4 +172,41 @@ bash backend/run_e2e_test.sh
 
 ---
 
-如需进一步定制测试流程或遇到问题，请查阅项目文档或联系开发者。 
+如需进一步定制测试流程或遇到问题，请查阅项目文档或联系开发者。
+
+## 🏗️ 环境变量说明
+
+| 变量名 | 说明 | 示例 |
+|--------|------|------|
+| ENVIRONMENT | 运行环境 | development/production |
+| DATABASE_URL | 数据库连接 | postgresql://postgres:postgres@db:5432/wedocx |
+| REDIS_HOST | Redis主机 | redis |
+| REDIS_PORT | Redis端口 | 6379 |
+| SMTP_SERVER | SMTP服务器 | smtp.qq.com |
+| SMTP_PORT | SMTP端口 | 587 |
+| SMTP_USER | 邮箱账号 | your_email@qq.com |
+| SMTP_PASSWORD | 邮箱密码 | your_password |
+| SENDER_EMAIL | 发件人邮箱 | your_email@qq.com |
+
+## 🐳 Docker一键部署
+
+1. 安装 Docker & Docker Compose
+2. 克隆本项目并进入目录
+3. 执行：
+   ```bash
+   docker-compose up --build
+   ```
+4. 访问 http://localhost:8000 体验API，/admin 访问后台管理
+
+## 🛠️ 常见问题（FAQ）
+
+- **Q: 邮件收不到？**
+  - 检查SMTP配置，建议使用QQ/163等主流邮箱，开启SMTP服务并使用授权码。
+- **Q: PDF未生成？**
+  - 检查output目录权限，确保Playwright依赖已安装。
+- **Q: 容器启动失败？**
+  - 检查端口占用、环境变量、依赖安装情况。
+- **Q: 如何自定义环境变量？**
+  - 可在docker-compose.yml或.env文件中覆盖默认配置。
+
+如有更多问题请查阅源码或联系开发者。 
