@@ -44,3 +44,6 @@ class Task(Base):
 
     def __repr__(self):
         return f"<Task(id='{self.id}', status='{self.status}')>"
+
+    def __str__(self):
+        return f"任务: {self.id}"
