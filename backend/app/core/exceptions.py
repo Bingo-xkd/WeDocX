@@ -111,26 +111,38 @@ def create_error_response(
     return response
 
 
-async def wechat_exception_handler(
-    request: Request, exc: WeDocXException
-) -> JSONResponse:
-    """WeDocX异常处理器"""
+async def wechat_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    """兼容HTTPException和自定义异常的处理器"""
+    if hasattr(exc, "error_code"):
+        error_code = exc.error_code
+        message = getattr(exc, "message", str(exc))
+        status_code = getattr(exc, "status_code", 500)
+        details = getattr(exc, "details", None)
+    elif hasattr(exc, "detail") and hasattr(exc, "status_code"):
+        error_code = "HTTP_ERROR"
+        message = exc.detail
+        status_code = exc.status_code
+        details = None
+    else:
+        error_code = "INTERNAL_ERROR"
+        message = str(exc)
+        status_code = 500
+        details = None
     logger.error(
-        f"WeDocX异常: {exc.error_code} - {exc.message}",
+        f"异常: {error_code} - {message}",
         extra={
             "url": str(request.url),
             "method": request.method,
-            "details": exc.details,
+            "details": details,
         },
     )
-
     return JSONResponse(
-        status_code=exc.status_code,
+        status_code=status_code,
         content=create_error_response(
-            status_code=exc.status_code,
-            error_code=exc.error_code,
-            message=exc.message,
-            details=exc.details,
+            status_code=status_code,
+            error_code=error_code,
+            message=message,
+            details=details,
         ),
     )
 

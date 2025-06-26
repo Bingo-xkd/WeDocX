@@ -5,14 +5,15 @@ WeDocX FastAPI 主应用
 from app.api.endpoints import router as api_router
 from app.core.config import settings
 from app.core.exceptions import (
-    APIException,
+    TaskNotFoundException,
+    ValidationException,
     general_exception_handler,
     http_exception_handler,
     validation_exception_handler,
     wechat_exception_handler,
 )
 from app.core.logging import get_logger, setup_logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
@@ -42,10 +43,12 @@ app.add_middleware(
 )
 
 # 注册全局异常处理器
-app.add_exception_handler(APIException, wechat_exception_handler)
 app.add_exception_handler(ValidationError, validation_exception_handler)
 app.add_exception_handler(HTTPException, http_exception_handler)
 app.add_exception_handler(Exception, general_exception_handler)
+app.add_exception_handler(HTTPException, wechat_exception_handler)
+app.add_exception_handler(TaskNotFoundException, wechat_exception_handler)
+app.add_exception_handler(ValidationException, wechat_exception_handler)
 
 # 注册API路由
 app.include_router(api_router, prefix=settings.API_V1_STR)
@@ -75,12 +78,10 @@ def read_root():
     }
 
 
-@app.exception_handler(APIException)
-async def api_exception_handler(request: Request, exc: APIException):
-    # 在这里可以添加处理API异常的逻辑
-    return JSONResponse(
-        status_code=exc.status_code, content={"error": exc.error, "message": exc.detail}
-    )
+@app.exception_handler(HTTPException)
+async def api_exception_handler(request: Request, exc: HTTPException):
+    # 保持原有处理逻辑
+    return await wechat_exception_handler(request, exc)
 
 
 # 支持直接python main.py本地运行

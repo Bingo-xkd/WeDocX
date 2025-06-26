@@ -13,7 +13,7 @@ def test_process_url_endpoint_success(
     mock_task_result.id = f"mock-task-id-{url_key}"
     mock_chain = MagicMock()
     mock_chain.return_value.apply_async.return_value = mock_task_result
-    monkeypatch.setattr("main.chain", mock_chain)
+    monkeypatch.setattr("app.api.endpoints.chain", mock_chain)
 
     # 准备测试数据
     test_url = valid_urls[url_key]
@@ -26,7 +26,7 @@ def test_process_url_endpoint_success(
     # 断言
     assert response.status_code == 200
     resp_json = response.json()
-    assert resp_json["status"] == "success"
+    assert resp_json["success"] is True
     assert resp_json["task_id"] == f"mock-task-id-{url_key}"
     assert resp_json["pdf_file"].endswith(".pdf")
 

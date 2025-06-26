@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
     DEBUG: bool = False
     ENVIRONMENT: str = "development"  # development, production, testing
+    VERSION: str = "0.2.0"
 
     # 服务器配置
     HOST: str = "0.0.0.0"
@@ -24,7 +25,9 @@ class Settings(BaseSettings):
     WORKERS: int = 1
 
     # 文件存储配置
-    OUTPUT_DIR: Path = Path("output")
+    OUTPUT_DIR: Path = (
+        Path(__file__).parent.parent.parent / "output"
+    )  # 项目根目录/output
     MAX_FILE_SIZE: int = 50 * 1024 * 1024  # 50MB
     ALLOWED_EXTENSIONS: list = [".pdf", ".html", ".txt"]
 

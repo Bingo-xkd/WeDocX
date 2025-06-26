@@ -39,7 +39,7 @@ def test_process_url_endpoint_success(
     response = client.post("/api/v1/process-url", json=data)
     assert response.status_code == 200
     resp_json = response.json()
-    assert resp_json["status"] == "success"
+    assert resp_json["success"] is True
     assert resp_json["task_id"] == f"mock-task-id-{url_key}"
     assert resp_json["pdf_file"].endswith(".pdf")
 

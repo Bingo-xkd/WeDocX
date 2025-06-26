@@ -11,7 +11,7 @@ def test_create_pdf_task_success(mock_url_to_pdf_sync, valid_urls, temp_output_d
     output_path = temp_output_dir / filename
     mock_url_to_pdf_sync.return_value = str(output_path)
 
-    result = create_pdf_task(url, str(output_path))
+    result = create_pdf_task.run(url, str(output_path))
 
     mock_url_to_pdf_sync.assert_called_once_with(url, str(output_path))
     assert result == str(output_path)
@@ -30,9 +30,13 @@ def test_send_email_task_success(mock_email_service, email_test_cases, temp_outp
     attachment_path.touch()  # 创建一个虚拟附件文件
     pdf_path = str(attachment_path)
 
-    result = send_email_task(pdf_path, to_email, subject, body)
+    result = send_email_task.run(to_email, pdf_path)
 
     service_instance.send_email.assert_called_once_with(
-        to_email=to_email, subject=subject, body=body, attachments=[pdf_path]
+        to_email=to_email,
+        subject="Your PDF is ready",
+        body="Please find your generated PDF attached.",
+        attachments=[pdf_path],
     )
-    assert result is True
+    assert result["status"] == "SUCCESS"
+    assert result["recipient"] == to_email

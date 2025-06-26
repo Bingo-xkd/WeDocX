@@ -39,10 +39,13 @@ def setup_logging():
     logger.info("日志系统配置完成.")
 
 
-def get_logger():
+def get_logger(name=None):
     """
     获取配置好的logger实例
+    :param name: 可选的logger名称（兼容logging风格）
     """
+    if name:
+        return logger.bind(name=name)
     return logger
 
 

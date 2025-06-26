@@ -5,7 +5,7 @@
     },
     "urls": {
         "valid": {
-            "simple": "https://www.wikipedia.org",
+            "simple": "https://news.baidu.com/",
             "complex": "https://mp.weixin.qq.com/s/z7NZ5ilDNtwqnN8R39DKqw"
         },
         "invalid": {

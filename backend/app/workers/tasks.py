@@ -9,12 +9,7 @@ from app.celery_app import celery_app
 from app.core.config import settings
 from app.core.exceptions import EmailSendException, PDFGenerationException
 from app.core.logging import get_logger
-from app.services.document_service import process_url_to_pdf
-from app.services.email_service import (
-    EmailConfig,
-    EmailService,
-    send_email_with_attachment,
-)
+from app.services.email_service import EmailConfig, EmailService
 from app.services.pdf_service import url_to_pdf_sync
 from celery import current_task
 from celery.utils.log import get_task_logger
@@ -31,17 +26,17 @@ celery_logger = get_task_logger(__name__)
     retry_backoff=True,
     retry_jitter=True,
 )
-def create_pdf_task(self, url: str):
+def create_pdf_task(self, url: str, filename: str = None):
     """
     Celery task to create a PDF from a URL.
     """
     try:
         logger.info(f"[{self.request.id}] Starting PDF creation for URL: {url}")
-        output_path = process_url_to_pdf(url, task_id=str(self.request.id))
+        output_path = url_to_pdf_sync(url, filename)
         logger.info(
             f"[{self.request.id}] PDF created successfully. Path: {output_path}"
         )
-        return {"status": "SUCCESS", "file_path": str(output_path)}
+        return str(output_path)
     except Exception as e:
         logger.error(
             f"[{self.request.id}] Error creating PDF for URL {url}: {e}", exc_info=True
@@ -65,11 +60,13 @@ def send_email_task(self, recipient_email: str, file_path: str):
         logger.info(
             f"[{self.request.id}] Sending PDF to {recipient_email} from path: {file_path}"
         )
-        send_email_with_attachment(
+        email_config = EmailConfig()
+        email_service = EmailService(config=email_config)
+        email_service.send_email(
+            to_email=recipient_email,
             subject="Your PDF is ready",
-            recipient_email=recipient_email,
             body="Please find your generated PDF attached.",
-            file_path=file_path,
+            attachments=[file_path],
         )
         logger.info(
             f"[{self.request.id}] Email sent successfully to {recipient_email}."
