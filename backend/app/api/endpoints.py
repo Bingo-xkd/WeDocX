@@ -5,9 +5,13 @@ API端点模块
 from datetime import datetime
 from typing import Optional
 
+from app.core.config import settings
+from app.models.user import User
+from app.services.pdf_service import backup_output_dir, cleanup_file, restore_output_dir
 from celery import chain
 from celery.result import AsyncResult
 from fastapi import APIRouter, Depends, HTTPException
+from main import authenticate
 from pydantic import ValidationError
 
 from ..core.exceptions import (
@@ -219,3 +223,30 @@ async def read_root():
         "version": "0.2.0",
         "timestamp": datetime.now(),
     }
+
+
+@router.post("/file/cleanup")
+async def file_cleanup(file_path: str, user: User = Depends(authenticate)):
+    """删除指定文件（需认证）"""
+    if not user.is_superuser:
+        raise HTTPException(status_code=403, detail="无权限")
+    ok = cleanup_file(file_path)
+    return {"success": ok}
+
+
+@router.post("/file/backup")
+async def file_backup(backup_dir: str, user: User = Depends(authenticate)):
+    """备份output目录（需认证）"""
+    if not user.is_superuser:
+        raise HTTPException(status_code=403, detail="无权限")
+    backup_path = backup_output_dir(backup_dir)
+    return {"backup_path": backup_path}
+
+
+@router.post("/file/restore")
+async def file_restore(backup_path: str, user: User = Depends(authenticate)):
+    """恢复output目录（需认证）"""
+    if not user.is_superuser:
+        raise HTTPException(status_code=403, detail="无权限")
+    ok = restore_output_dir(backup_path)
+    return {"success": ok}

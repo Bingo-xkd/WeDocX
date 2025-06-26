@@ -1,6 +1,7 @@
 import asyncio
 import os
 import re
+import shutil
 from datetime import datetime
 from typing import Optional
 
@@ -179,3 +180,39 @@ def url_to_txt_sync(url: str, filename: str = None) -> str:
     if not os.path.exists(txt_path):
         raise RuntimeError("TXT文件生成失败")
     return txt_path
+
+
+def cleanup_file(file_path: str) -> bool:
+    """
+    删除指定文件
+    """
+    try:
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return True
+        return False
+    except Exception:
+        return False
+
+
+def backup_output_dir(backup_dir: str) -> str:
+    """
+    备份 output 目录到指定目录，返回备份路径
+    """
+    now_str = datetime.now().strftime("%Y%m%d-%H%M%S")
+    backup_path = os.path.join(backup_dir, f"output_backup_{now_str}")
+    shutil.copytree(OUTPUT_DIR, backup_path)
+    return backup_path
+
+
+def restore_output_dir(backup_path: str) -> bool:
+    """
+    恢复 output 目录（会覆盖现有文件）
+    """
+    try:
+        if os.path.exists(OUTPUT_DIR):
+            shutil.rmtree(OUTPUT_DIR)
+        shutil.copytree(backup_path, OUTPUT_DIR)
+        return True
+    except Exception:
+        return False
